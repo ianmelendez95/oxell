@@ -13,6 +13,7 @@ massif/
 # Testing
 /testsuite/tests/should-succeed/**/build/
 /testsuite/tests/should-succeed/**/dist/
+/testsuite/bin
 /test-ref/build/
 /test-ref/dist/
 

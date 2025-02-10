@@ -16,6 +16,7 @@ PROJECT_DIR = os.path.abspath(os.path.dirname(TESTSUITE_DIR))
 
 INTERPRETER_PROJECT_DIR = os.path.join(PROJECT_DIR, "interpreter")
 
+EXE = ''
 
 # EXECUTE TESTS
 
@@ -50,7 +51,7 @@ def collect_test_files(dir_path):
 
 
 def compile_file(hl_file):
-    eval_proc = subprocess.run(["stack", "run", "--", hl_file],
+    eval_proc = subprocess.run([EXE, hl_file],
                                cwd=os.path.dirname(hl_file),
                                stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
@@ -131,6 +132,17 @@ def exec_test(file_dict):
         return TestResult(TestResult.FAILED, tf.msg)
 
 
+def install():
+    install_proc = subprocess.run(["cabal", "install", "--installdir=testsuite/bin"],
+                                  cwd=PROJECT_DIR,
+                                  stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+
+    if install_proc.returncode != 0:
+        raise TestFailure("Failed to install executable: exit-code='{}' output:\n{}".format(install_proc.returncode, install_proc.stdout.decode("UTF-8")))
+
+    return os.path.abspath(os.path.join(PROJECT_DIR, "testsuite/bin/oxell"))
+
+
 def parse_args():
     parser = argparse.ArgumentParser(
         prog='run-tests',
@@ -149,7 +161,12 @@ def parse_args():
 
 if __name__ == '__main__':
     args = parse_args()
-    subprocess.run(["stack", "build"], check=True)
+    subprocess.run(["cabal", "build"], check=True)
+    exe = install()
+
+    print("Using executable: {}".format(exe))
+    EXE = exe
+
     for n, fs in collect_test_files(os.path.join(TESTSUITE_DIR, "tests/should-succeed")).items():
         if args.match and not args.match in n:
             TestResult(TestResult.EXCLUDED).print(n)
